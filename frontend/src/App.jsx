@@ -228,8 +228,8 @@ const toggleTask = (id, completed) => {
               padding: "15px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
             }}>
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
+              <h3>{item.title || item.name}</h3>
+              <p>{item.description || item.email}</p>
 
               {/* DOWNLOAD */}
               {item.fileUrl && (
