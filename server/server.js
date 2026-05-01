@@ -119,13 +119,13 @@ app.use(cors());
 app.use(express.json());
 
 // IMPORTANT: serve uploaded files
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(uploadPath));
 
 /*MULTER CONFIG*/
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
+    cb(null, uploadPath);
+},
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   },
