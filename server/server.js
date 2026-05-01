@@ -99,50 +99,55 @@
 
 // For Adding file and uploading support
 const express = require("express");
-
 const cors = require("cors");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const uploadPath = path.join(__dirname, "uploads");
 require("dotenv").config();
 const mongoose = require("mongoose");
+
 const Task = require("./models/Task");
+const Resource = require("./models/Resource");
+
 const app = express();
 
-if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath, { recursive: true });
-}
 
 // Middleware
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:5173",                        // local dev
+  "https://study-resource-platform.vercel.app"    // production
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  }
+}));
+
+app.options("*", cors({
+  origin: allowedOrigins
+}));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // IMPORTANT: serve uploaded files
-app.use("/uploads", express.static(uploadPath));
+// app.use("/uploads", express.static(uploadPath));
 
-/*MULTER CONFIG*/
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadPath);
-},
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ storage });
 
 /*MONGODB CONNECT*/
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => {
     console.log("MongoDB Error:", err);
   });
 
 /*MODEL*/
-const Resource = require("./models/Resource"); // (we will rename later)
+// const Resource = require("./models/Resource");
 
 /*HOME*/
 app.get("/", (req, res) => {
@@ -150,16 +155,14 @@ app.get("/", (req, res) => {
 });
 
 /*CREATE RESOURCE (WITH FILE)*/
-app.post("/resources", upload.single("file"), async (req, res) => {
+app.post("/resources", async (req, res) => {
   try {
     const { title, description } = req.body;
-
-    const fileUrl = req.file ? req.file.filename : null;
 
     const resource = new Resource({
       title,
       description,
-      fileUrl
+      fileUrl: null
     });
 
     await resource.save();
@@ -177,7 +180,7 @@ app.post("/resources", upload.single("file"), async (req, res) => {
 /*GET ALL RESOURCES*/
 app.get("/resources", async (req, res) => {
   try {
-    const resources = await Resource.find();
+    const resources = await Resource.find().sort({ _id: -1 });
     res.json(resources);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -214,7 +217,7 @@ app.post("/tasks", async (req, res) => {
 // Get All Tasks
 app.get("/tasks", async (req, res) => {
   try {
-    const tasks = await Task.find();
+    const tasks = await Task.find().sort({ _id: -1 });
     res.json(tasks);
 
   } catch (err) {
@@ -229,7 +232,7 @@ app.put("/tasks/:id", async (req, res) => {
       req.params.id,
       { completed: req.body.completed },
       { new: true }
-    );
+    );    
 
     res.json(updatedTask);
   } catch (err) {
@@ -239,6 +242,11 @@ app.put("/tasks/:id", async (req, res) => {
 
 /* START SERVER*/
 const PORT = process.env.PORT || 5000;
+app.use((err, req, res, next) => {
+  console.error("SERVER ERROR:", err);
+  // res.status(500).json({ error: "File upload failed" });
+  res.status(500).json({ error: "Server error" });
+});
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server running on port", PORT);
