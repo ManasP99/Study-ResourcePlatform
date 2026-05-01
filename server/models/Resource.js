@@ -1,9 +1,22 @@
 const mongoose = require("mongoose");
 
 const resourceSchema = new mongoose.Schema({
-  title: String,
-  description: String,
-  fileUrl: String
+  title: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  description: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  fileUrl: {
+    type: String,
+    default: null
+  }
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model("Resource", resourceSchema);
