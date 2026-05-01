@@ -103,11 +103,15 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 const mongoose = require("mongoose");
 const Task = require("./models/Task");
 const app = express();
 
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
 
 // Middleware
 app.use(cors());
