@@ -97,11 +97,16 @@
 // Newer Version
 // ------------------
 
-// For Adding file and uploading support
+// IMPORTS
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const mongoose = require("mongoose");
+
+// FILE UPLOAD
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 const Task = require("./models/Task");
 const Resource = require("./models/Resource");
@@ -109,10 +114,35 @@ const Resource = require("./models/Resource");
 const app = express();
 
 
-// Middleware
+// ================= FILE UPLOAD SETUP =================
+
+const uploadPath = path.join(__dirname, "uploads");
+
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
+}
+
+// Serve uploaded files
+app.use("/uploads", express.static(uploadPath));
+
+// Multer config
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
+
+// ================= CORS =================
+
 const allowedOrigins = [
-  "http://localhost:5173",                        // local dev
-  "https://study-resource-platform.vercel.app"    // production
+  "http://localhost:5173",
+  "https://study-resource-platform.vercel.app"
 ];
 
 app.use(cors({
@@ -125,14 +155,18 @@ app.use(cors({
   }
 }));
 
+// (OPTIONAL safety for preflight)
+app.options("*", cors());
+
+
+// ================= MIDDLEWARE =================
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// IMPORTANT: serve uploaded files
-// app.use("/uploads", express.static(uploadPath));
 
+// ================= DATABASE =================
 
-/*MONGODB CONNECT*/
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
@@ -140,23 +174,36 @@ mongoose
     console.log("MongoDB Error:", err);
   });
 
-/*MODEL*/
-// const Resource = require("./models/Resource");
 
-/*HOME*/
+// ================= ROUTES =================
+
+// Home
 app.get("/", (req, res) => {
   res.send("College Resource API Running");
 });
 
-/*CREATE RESOURCE (WITH FILE)*/
-app.post("/resources", async (req, res) => {
+// Health check (VERY useful)
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK" });
+});
+
+
+// ================= RESOURCE APIs =================
+
+// CREATE RESOURCE WITH FILE
+app.post("/resources", upload.single("file"), async (req, res) => {
   try {
     const { title, description } = req.body;
+
+    // ✅ VALIDATION
+    if (!title || !description) {
+      return res.status(400).json({ error: "Title and description required" });
+    }
 
     const resource = new Resource({
       title,
       description,
-      fileUrl: null
+      fileUrl: req.file ? req.file.filename : null
     });
 
     await resource.save();
@@ -171,7 +218,8 @@ app.post("/resources", async (req, res) => {
   }
 });
 
-/*GET ALL RESOURCES*/
+
+// GET ALL RESOURCES
 app.get("/resources", async (req, res) => {
   try {
     const resources = await Resource.find().sort({ _id: -1 });
@@ -181,7 +229,8 @@ app.get("/resources", async (req, res) => {
   }
 });
 
-/*DELETE RESOURCE*/
+
+// DELETE RESOURCE
 app.delete("/resources/:id", async (req, res) => {
   try {
     await Resource.findByIdAndDelete(req.params.id);
@@ -191,12 +240,18 @@ app.delete("/resources/:id", async (req, res) => {
   }
 });
 
-/*TASK APIs*/
+
+// ================= TASK APIs =================
 
 // Create Task
 app.post("/tasks", async (req, res) => {
   try {
     const { text } = req.body;
+
+    // ✅ VALIDATION
+    if (!text) {
+      return res.status(400).json({ error: "Task text required" });
+    }
 
     const task = new Task({ text });
     await task.save();
@@ -219,14 +274,14 @@ app.get("/tasks", async (req, res) => {
   }
 });
 
-// Update Route
+// Update Task
 app.put("/tasks/:id", async (req, res) => {
   try {
     const updatedTask = await Task.findByIdAndUpdate(
       req.params.id,
       { completed: req.body.completed },
       { new: true }
-    );    
+    );
 
     res.json(updatedTask);
   } catch (err) {
@@ -234,13 +289,28 @@ app.put("/tasks/:id", async (req, res) => {
   }
 });
 
-/* START SERVER*/
-const PORT = process.env.PORT || 5000;
+// Delete Task
+app.delete("/tasks/:id", async (req, res) => {
+  try {
+    await Task.findByIdAndDelete(req.params.id);
+    res.json({ message: "Task deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ================= ERROR HANDLER =================
+
 app.use((err, req, res, next) => {
   console.error("SERVER ERROR:", err);
-  // res.status(500).json({ error: "File upload failed" });
   res.status(500).json({ error: "Server error" });
 });
+
+
+// ================= START SERVER =================
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server running on port", PORT);
