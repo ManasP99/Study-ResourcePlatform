@@ -12,77 +12,73 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [taskText, setTaskText] = useState("");
 
-  /* FETCH RESOURCES*/
+  /* FETCH RESOURCES */
   const fetchResources = () => {
     fetch("https://study-resourceplatform.onrender.com/resources")
       .then(async (res) => {
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    console.error("Server returned:", text);
-    throw new Error("Invalid JSON response");
-  }
-})
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          console.error("Server returned:", text);
+          throw new Error("Invalid JSON response");
+        }
+      })
       .then((data) => setResources(data))
       .catch((err) => console.log(err));
   };
 
+  /* FETCH TASKS */
   const fetchTasks = () => {
-  fetch("https://study-resourceplatform.onrender.com/tasks")
-    .then(async (res) => {
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    console.error("Server returned:", text);
-    throw new Error("Invalid JSON response");
-  }
-})
-    .then((data) => setTasks(data))
-    .catch((err) => console.log(err));
-};
+    fetch("https://study-resourceplatform.onrender.com/tasks")
+      .then(async (res) => {
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          console.error("Server returned:", text);
+          throw new Error("Invalid JSON response");
+        }
+      })
+      .then((data) => setTasks(data))
+      .catch((err) => console.log(err));
+  };
 
   useEffect(() => {
     fetchResources();
     fetchTasks();
   }, []);
 
-  /*ADD RESOURCE*/
+  /* ADD RESOURCE (WITH FILE UPLOAD) */
   const addResource = () => {
     if (!title || !description) {
       alert("Please fill title and description");
       return;
     }
+
     setLoading(true);
 
-    // const formData = new FormData();
-    // formData.append("title", title);
-    // formData.append("description", description);
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
 
-    // if (file) {
-    //   formData.append("file", file);
-    // }
+    if (file) {
+      formData.append("file", file);
+    }
 
     fetch("https://study-resourceplatform.onrender.com/resources", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    title,
-    description
-  })
-})
+      method: "POST",
+      body: formData,
+    })
       .then(async (res) => {
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    console.error("Server returned:", text);
-    throw new Error("Invalid JSON response");
-  }
-})
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          console.error("Server returned:", text);
+          throw new Error("Invalid JSON response");
+        }
+      })
       .then(() => {
         setTitle("");
         setDescription("");
@@ -96,106 +92,109 @@ function App() {
       });
   };
 
+  /* ADD TASK */
   const addTask = () => {
-  if (!taskText.trim()) return;
+    if (!taskText.trim()) return;
 
-  fetch("https://study-resourceplatform.onrender.com/tasks", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ text: taskText })
-  })
-    .then(async (res) => {
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    console.error("Server returned:", text);
-    throw new Error("Invalid JSON response");
-  }
-})
-    .then(() => {
-      setTaskText("");
-      fetchTasks();
+    fetch("https://study-resourceplatform.onrender.com/tasks", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text: taskText }),
     })
-    .catch((err) => console.log(err));
-};
+      .then(async (res) => {
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          console.error("Server returned:", text);
+          throw new Error("Invalid JSON response");
+        }
+      })
+      .then(() => {
+        setTaskText("");
+        fetchTasks();
+      })
+      .catch((err) => console.log(err));
+  };
 
-const deleteTask = (id) => {
-  fetch(`https://study-resourceplatform.onrender.com/tasks/${id}`, {
-    method: "DELETE",
-  })
-    .then(async (res) => {
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    console.error("Server returned:", text);
-    throw new Error("Invalid JSON response");
-  }
-})
-    .then(() => fetchTasks())
-    .catch((err) => console.log(err));
-};
+  /* DELETE TASK */
+  const deleteTask = (id) => {
+    fetch(`https://study-resourceplatform.onrender.com/tasks/${id}`, {
+      method: "DELETE",
+    })
+      .then(async (res) => {
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          console.error("Server returned:", text);
+          throw new Error("Invalid JSON response");
+        }
+      })
+      .then(() => fetchTasks())
+      .catch((err) => console.log(err));
+  };
 
-const toggleTask = (id, completed) => {
-  fetch(`https://study-resourceplatform.onrender.com/tasks/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ completed: !completed })
-  })
-    .then(async (res) => {
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    console.error("Server returned:", text);
-    throw new Error("Invalid JSON response");
-  }
-})
-    .then(() => fetchTasks())
-    .catch((err) => console.log(err));
-};
+  /* TOGGLE TASK */
+  const toggleTask = (id, completed) => {
+    fetch(`https://study-resourceplatform.onrender.com/tasks/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ completed: !completed }),
+    })
+      .then(async (res) => {
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          console.error("Server returned:", text);
+          throw new Error("Invalid JSON response");
+        }
+      })
+      .then(() => fetchTasks())
+      .catch((err) => console.log(err));
+  };
 
-  /*DELETE RESOURCE*/
+  /* DELETE RESOURCE */
   const deleteResource = (id) => {
     fetch(`https://study-resourceplatform.onrender.com/resources/${id}`, {
       method: "DELETE",
     })
       .then(async (res) => {
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    console.error("Server returned:", text);
-    throw new Error("Invalid JSON response");
-  }
-})
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          console.error("Server returned:", text);
+          throw new Error("Invalid JSON response");
+        }
+      })
       .then(() => fetchResources())
       .catch((err) => console.log(err));
   };
 
   return (
     <div>
-
       {/* NAVBAR */}
-      <div style={{
-        background: "#1e293b",
-        color: "white",
-        padding: "15px",
-        fontSize: "20px",
-        fontWeight: "bold",
-        textAlign: "center"
-      }}>
+      <div
+        style={{
+          background: "#1e293b",
+          color: "white",
+          padding: "15px",
+          fontSize: "20px",
+          fontWeight: "bold",
+          textAlign: "center",
+        }}
+      >
         📚 Study Planner & Resource Platform
       </div>
 
       <div className="container">
-
-        {/* FORM */}
+        {/* ADD RESOURCE */}
         <div className="card">
           <h2>Add Resource</h2>
 
@@ -215,17 +214,18 @@ const toggleTask = (id, completed) => {
 
           <br /><br />
 
-          {/* <input
+          {/* FILE INPUT */}
+          <input
             type="file"
             onChange={(e) => setFile(e.target.files[0])}
-          /> */}
+          />
 
           <br /><br />
 
           <button
-              onClick={addResource}
-              disabled={loading}
-              className="btn-green"
+            onClick={addResource}
+            disabled={loading}
+            className="btn-green"
           >
             {loading ? "Uploading..." : "Upload Resource"}
           </button>
@@ -249,49 +249,52 @@ const toggleTask = (id, completed) => {
             Add Task
           </button>
 
-              <ul style={{ marginTop: "15px" }}>
-                {tasks.map((task) => (
-                  <li key={task._id} className="task">
-                    <input
-                      type="checkbox"
-                      checked={task.completed}
-                      onChange={() => toggleTask(task._id, task.completed)}
-                    />
+          <ul style={{ marginTop: "15px" }}>
+            {tasks.map((task) => (
+              <li key={task._id} className="task">
+                <input
+                  type="checkbox"
+                  checked={task.completed}
+                  onChange={() => toggleTask(task._id, task.completed)}
+                />
 
-                    <span
-                      style={{
-                        textDecoration: task.completed ? "line-through" : "none",
-                        marginLeft: "8px"
-                      }}
-                    >
-                    {task.text}
-                    </span>
-                    <button
-                        onClick={() => deleteTask(task._id)}
-                        className="btn-red"
-                        style={{ marginLeft: "10px" }}
-                    >
-                      Delete
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                <span
+                  style={{
+                    textDecoration: task.completed ? "line-through" : "none",
+                    marginLeft: "8px",
+                  }}
+                >
+                  {task.text}
+                </span>
 
+                <button
+                  onClick={() => deleteTask(task._id)}
+                  className="btn-red"
+                  style={{ marginLeft: "10px" }}
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
-        
-        {/* LIST */}
+
+        {/* RESOURCE LIST */}
         <h2>Available Resources</h2>
 
         <div className="grid">
           {resources.map((item) => (
-            <div key={item._id} style={{
-              background: "white",
-              borderRadius: "10px",
-              padding: "15px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-            }}>
-              <h3>{item.title || item.name}</h3>
-              <p>{item.description || item.email}</p>
+            <div
+              key={item._id}
+              style={{
+                background: "white",
+                borderRadius: "10px",
+                padding: "15px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              }}
+            >
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
 
               {/* DOWNLOAD */}
               {item.fileUrl && (
@@ -308,15 +311,14 @@ const toggleTask = (id, completed) => {
               <br />
 
               <button
-                  onClick={() => deleteResource(item._id)}
-                  className="btn-red"
+                onClick={() => deleteResource(item._id)}
+                className="btn-red"
               >
                 Delete
               </button>
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );
