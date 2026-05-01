@@ -155,10 +155,6 @@ app.use(cors({
   }
 }));
 
-// (OPTIONAL safety for preflight)
-app.options("*", cors());
-
-
 // ================= MIDDLEWARE =================
 
 app.use(express.json());
