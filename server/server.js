@@ -125,9 +125,6 @@ app.use(cors({
   }
 }));
 
-app.options("/*", cors({
-  origin: allowedOrigins
-}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
