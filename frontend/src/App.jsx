@@ -15,14 +15,30 @@ function App() {
   /* FETCH RESOURCES*/
   const fetchResources = () => {
     fetch("https://study-resourceplatform.onrender.com/resources")
-      .then((res) => res.json())
+      .then(async (res) => {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("Server returned:", text);
+    throw new Error("Invalid JSON response");
+  }
+})
       .then((data) => setResources(data))
       .catch((err) => console.log(err));
   };
 
   const fetchTasks = () => {
   fetch("https://study-resourceplatform.onrender.com/tasks")
-    .then((res) => res.json())
+    .then(async (res) => {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("Server returned:", text);
+    throw new Error("Invalid JSON response");
+  }
+})
     .then((data) => setTasks(data))
     .catch((err) => console.log(err));
 };
@@ -40,19 +56,33 @@ function App() {
     }
     setLoading(true);
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
+    // const formData = new FormData();
+    // formData.append("title", title);
+    // formData.append("description", description);
 
-    if (file) {
-      formData.append("file", file);
-    }
+    // if (file) {
+    //   formData.append("file", file);
+    // }
 
     fetch("https://study-resourceplatform.onrender.com/resources", {
-      method: "POST",
-      body: formData,
-    })
-      .then((res) => res.json())
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    title,
+    description
+  })
+})
+      .then(async (res) => {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("Server returned:", text);
+    throw new Error("Invalid JSON response");
+  }
+})
       .then(() => {
         setTitle("");
         setDescription("");
@@ -76,7 +106,15 @@ function App() {
     },
     body: JSON.stringify({ text: taskText })
   })
-    .then((res) => res.json())
+    .then(async (res) => {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("Server returned:", text);
+    throw new Error("Invalid JSON response");
+  }
+})
     .then(() => {
       setTaskText("");
       fetchTasks();
@@ -88,7 +126,15 @@ const deleteTask = (id) => {
   fetch(`https://study-resourceplatform.onrender.com/tasks/${id}`, {
     method: "DELETE",
   })
-    .then((res) => res.json())
+    .then(async (res) => {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("Server returned:", text);
+    throw new Error("Invalid JSON response");
+  }
+})
     .then(() => fetchTasks())
     .catch((err) => console.log(err));
 };
@@ -101,7 +147,15 @@ const toggleTask = (id, completed) => {
     },
     body: JSON.stringify({ completed: !completed })
   })
-    .then((res) => res.json())
+    .then(async (res) => {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("Server returned:", text);
+    throw new Error("Invalid JSON response");
+  }
+})
     .then(() => fetchTasks())
     .catch((err) => console.log(err));
 };
@@ -111,7 +165,15 @@ const toggleTask = (id, completed) => {
     fetch(`https://study-resourceplatform.onrender.com/resources/${id}`, {
       method: "DELETE",
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("Server returned:", text);
+    throw new Error("Invalid JSON response");
+  }
+})
       .then(() => fetchResources())
       .catch((err) => console.log(err));
   };
@@ -153,10 +215,10 @@ const toggleTask = (id, completed) => {
 
           <br /><br />
 
-          <input
+          {/* <input
             type="file"
             onChange={(e) => setFile(e.target.files[0])}
-          />
+          /> */}
 
           <br /><br />
 
