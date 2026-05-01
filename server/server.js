@@ -116,9 +116,7 @@ app.use(express.json());
 // IMPORTANT: serve uploaded files
 app.use("/uploads", express.static("uploads"));
 
-/* =========================
-   MULTER CONFIG
-========================= */
+/*MULTER CONFIG*/
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -130,9 +128,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-/* =========================
-   MONGODB CONNECT
-========================= */
+/*MONGODB CONNECT*/
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
@@ -140,21 +136,15 @@ mongoose
     console.log("MongoDB Error:", err);
   });
 
-/* =========================
-   MODEL
-========================= */
+/*MODEL*/
 const Resource = require("./models/Resource"); // (we will rename later)
 
-/* =========================
-   HOME
-========================= */
+/*HOME*/
 app.get("/", (req, res) => {
   res.send("College Resource API Running");
 });
 
-/* =========================
-   CREATE RESOURCE (WITH FILE)
-========================= */
+/*CREATE RESOURCE (WITH FILE)*/
 app.post("/resources", upload.single("file"), async (req, res) => {
   try {
     const { title, description } = req.body;
@@ -162,9 +152,9 @@ app.post("/resources", upload.single("file"), async (req, res) => {
     const fileUrl = req.file ? req.file.filename : null;
 
     const resource = new Resource({
-      name: title,
-      email: description,
-      fileUrl: fileUrl
+      title,
+      description,
+      fileUrl
     });
 
     await resource.save();
@@ -179,9 +169,7 @@ app.post("/resources", upload.single("file"), async (req, res) => {
   }
 });
 
-/* =========================
-   GET ALL RESOURCES
-========================= */
+/*GET ALL RESOURCES*/
 app.get("/resources", async (req, res) => {
   try {
     const resources = await Resource.find();
@@ -191,9 +179,7 @@ app.get("/resources", async (req, res) => {
   }
 });
 
-/* =========================
-   DELETE RESOURCE
-========================= */
+/*DELETE RESOURCE*/
 app.delete("/resources/:id", async (req, res) => {
   try {
     await Resource.findByIdAndDelete(req.params.id);
@@ -203,9 +189,7 @@ app.delete("/resources/:id", async (req, res) => {
   }
 });
 
-/* =========================
-   TASK APIs
-========================= */
+/*TASK APIs*/
 
 // Create Task
 app.post("/tasks", async (req, res) => {
@@ -248,12 +232,9 @@ app.put("/tasks/:id", async (req, res) => {
   }
 });
 
-/* =========================
-   START SERVER
-========================= */
+/* START SERVER*/
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server running on port", PORT);
 });
-
