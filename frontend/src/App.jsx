@@ -11,6 +11,7 @@ function App() {
 
   const [tasks, setTasks] = useState([]);
   const [taskText, setTaskText] = useState("");
+  const [search, setSearch] = useState("");
 
   /* FETCH RESOURCES */
   const fetchResources = () => {
@@ -49,11 +50,17 @@ function App() {
     fetchTasks();
   }, []);
 
-  /* ADD RESOURCE (WITH FILE UPLOAD) */
+  /* ADD RESOURCE */
   const addResource = () => {
     if (!title || !description) {
       alert("Please fill title and description");
       return;
+    }
+
+    // optional confirm if no file
+    if (!file) {
+      const confirmUpload = window.confirm("Upload without file?");
+      if (!confirmUpload) return;
     }
 
     setLoading(true);
@@ -124,15 +131,6 @@ function App() {
     fetch(`https://study-resourceplatform.onrender.com/tasks/${id}`, {
       method: "DELETE",
     })
-      .then(async (res) => {
-        const text = await res.text();
-        try {
-          return JSON.parse(text);
-        } catch {
-          console.error("Server returned:", text);
-          throw new Error("Invalid JSON response");
-        }
-      })
       .then(() => fetchTasks())
       .catch((err) => console.log(err));
   };
@@ -146,33 +144,20 @@ function App() {
       },
       body: JSON.stringify({ completed: !completed }),
     })
-      .then(async (res) => {
-        const text = await res.text();
-        try {
-          return JSON.parse(text);
-        } catch {
-          console.error("Server returned:", text);
-          throw new Error("Invalid JSON response");
-        }
-      })
       .then(() => fetchTasks())
       .catch((err) => console.log(err));
   };
+
+  /* SEARCH FILTER */
+  const filteredResources = resources.filter((item) =>
+    (item.title || "").toLowerCase().includes(search.toLowerCase())
+  );
 
   /* DELETE RESOURCE */
   const deleteResource = (id) => {
     fetch(`https://study-resourceplatform.onrender.com/resources/${id}`, {
       method: "DELETE",
     })
-      .then(async (res) => {
-        const text = await res.text();
-        try {
-          return JSON.parse(text);
-        } catch {
-          console.error("Server returned:", text);
-          throw new Error("Invalid JSON response");
-        }
-      })
       .then(() => fetchResources())
       .catch((err) => console.log(err));
   };
@@ -214,11 +199,16 @@ function App() {
 
           <br /><br />
 
-          {/* FILE INPUT */}
           <input
             type="file"
             onChange={(e) => setFile(e.target.files[0])}
           />
+
+          {file && (
+            <p style={{ marginTop: "5px", fontSize: "14px" }}>
+              Selected: {file.name}
+            </p>
+          )}
 
           <br /><br />
 
@@ -282,8 +272,26 @@ function App() {
         {/* RESOURCE LIST */}
         <h2>Available Resources</h2>
 
+        <input
+          type="text"
+          placeholder="🔍 Search resources..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{
+            padding: "10px",
+            width: "100%",
+            marginBottom: "20px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+          }}
+        />
+
+        {filteredResources.length === 0 && (
+          <p>No resources found</p>
+        )}
+
         <div className="grid">
-          {resources.map((item) => (
+          {filteredResources.map((item) => (
             <div
               key={item._id}
               style={{
@@ -296,13 +304,11 @@ function App() {
               <h3>{item.title}</h3>
               <p>{item.description}</p>
 
-              {/* DOWNLOAD */}
               {item.fileUrl && (
                 <a
                   href={`https://study-resourceplatform.onrender.com/uploads/${item.fileUrl}`}
                   target="_blank"
                   rel="noreferrer"
-                  style={{ display: "inline-block", marginBottom: "10px" }}
                 >
                   📥 Download File
                 </a>
