@@ -178,7 +178,11 @@ function ResourcesPage({ resources, onRefresh, toast }) {
   const [file,  setFile]    = useState(null);
   const [search,setSearch]  = useState("");
   const [loading,setLoading]= useState(false);
-  const [drag,  setDrag]    = useState(false);
+  const [drag,      setDrag]        = useState(false);
+  const [subject,   setSubject]     = useState("General");
+  const [resourceType, setResourceType] = useState("Notes");
+  const [filterSubject, setFilterSubject] = useState("");
+  const [filterType,    setFilterType]    = useState("");
   const fileRef = useRef();
 
   const upload = async () => {
@@ -187,6 +191,8 @@ function ResourcesPage({ resources, onRefresh, toast }) {
     const fd = new FormData();
     fd.append("title", title);
     fd.append("description", desc);
+    fd.append("subject", subject);
+    fd.append("resourceType", resourceType);
     if (file) fd.append("file", file);
     try {
       const res = await fetch(`${API}/resources`, {
@@ -217,8 +223,10 @@ function ResourcesPage({ resources, onRefresh, toast }) {
   };
 
   const filtered = resources.filter(r =>
-    (r.title||"").toLowerCase().includes(search.toLowerCase()) ||
-    (r.description||"").toLowerCase().includes(search.toLowerCase())
+    ((r.title||"").toLowerCase().includes(search.toLowerCase()) ||
+    (r.description||"").toLowerCase().includes(search.toLowerCase())) &&
+    (!filterSubject || r.subject === filterSubject) &&
+    (!filterType    || r.resourceType === filterType)
   );
 
   const typeIcon = (url) => {
@@ -250,6 +258,18 @@ function ResourcesPage({ resources, onRefresh, toast }) {
             <label>Description *</label>
             <input placeholder="Brief description…" value={desc} onChange={e=>setDesc(e.target.value)}/>
           </div>
+          <div className="form-group">
+            <label>Subject</label>
+            <select value={subject} onChange={e=>setSubject(e.target.value)}>
+              {["General","Python","C/C++","HTML/CSS","JavaScript","React","DBMS","Math","Other"].map(s=><option key={s}>{s}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Type</label>
+            <select value={resourceType} onChange={e=>setResourceType(e.target.value)}>
+              {["Notes","PDF","Paper","PPT","Other"].map(t=><option key={t}>{t}</option>)}
+            </select>
+          </div>
         </div>
         <div className="form-group">
           <label>File (optional)</label>
@@ -270,9 +290,20 @@ function ResourcesPage({ resources, onRefresh, toast }) {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="search-bar mb24">
-        <input placeholder="🔍  Search resources…" value={search} onChange={e=>setSearch(e.target.value)}/>
+      {/* Search + Filters */}
+      <div style={{display:"flex",gap:"12px",marginBottom:"24px",flexWrap:"wrap"}}>
+        <input style={{flex:1,minWidth:"200px",background:"var(--card)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:"10px",padding:"10px 14px",fontFamily:"inherit",fontSize:"14px",outline:"none"}}
+          placeholder="🔍  Search by title or description…" value={search} onChange={e=>setSearch(e.target.value)}/>
+        <select style={{width:"150px",background:"var(--card2)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:"10px",padding:"10px 14px",fontFamily:"inherit",fontSize:"14px",outline:"none"}}
+          value={filterSubject} onChange={e=>setFilterSubject(e.target.value)}>
+          <option value="">All Subjects</option>
+          {["General","Python","C/C++","HTML/CSS","JavaScript","React","DBMS","Math","Other"].map(s=><option key={s}>{s}</option>)}
+        </select>
+        <select style={{width:"130px",background:"var(--card2)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:"10px",padding:"10px 14px",fontFamily:"inherit",fontSize:"14px",outline:"none"}}
+          value={filterType} onChange={e=>setFilterType(e.target.value)}>
+          <option value="">All Types</option>
+          {["Notes","PDF","Paper","PPT","Other"].map(t=><option key={t}>{t}</option>)}
+        </select>
       </div>
 
       {/* Grid */}
@@ -283,6 +314,10 @@ function ResourcesPage({ resources, onRefresh, toast }) {
               <div key={r._id} className="resource-card">
                 <div className="resource-icon">{typeIcon(r.fileUrl)}</div>
                 <div className="resource-title">{r.title}</div>
+                <div style={{display:"flex",gap:"6px",margin:"6px 0"}}>
+                  {r.subject && <span className="tag tag-purple">{r.subject}</span>}
+                  {r.resourceType && <span className="tag tag-yellow">{r.resourceType}</span>}
+                </div>
                 <p className="resource-desc">{r.description}</p>
                 <div className="resource-actions">
                   {r.fileUrl
