@@ -321,9 +321,10 @@ app.post("/resources", authMiddleware, upload.single("file"), async (req, res) =
 // GET RESOURCES (User-specific)
 app.get("/resources", authMiddleware, async (req, res) => {
   try {
-    const resources = await Resource.find({
-      userId: req.user.userId
-    }).sort({ createdAt: -1 });
+    // const resources = await Resource.find({
+    //   userId: req.user.userId
+    // }).sort({ createdAt: -1 });
+    const resources = await Resource.find({}).sort({ createdAt: -1 });
 
     res.json(resources);
 
