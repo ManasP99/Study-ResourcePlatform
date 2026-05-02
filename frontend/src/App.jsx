@@ -214,6 +214,23 @@ function ResourcesPage({ resources, onRefresh, toast }) {
     finally { setLoading(false); }
   };
 
+  const rateResource = async (id, stars) => {
+    try {
+      const res = await fetch(`${API}/resources/${id}/rate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getToken()}`
+        },
+        body: JSON.stringify({ stars }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast("❌ " + (data.error || "Rating failed")); return; }
+      toast(`⭐ Rated ${stars} star${stars > 1 ? "s" : ""}!`);
+      onRefresh();
+    } catch { toast("❌ Network error"); }
+  };
+  
   const del = async (id) => {
     if (!window.confirm("Delete this resource?")) return;
     try {
@@ -229,6 +246,33 @@ function ResourcesPage({ resources, onRefresh, toast }) {
     (!filterType    || r.resourceType === filterType)
   );
 
+  const renderStars = (resource) => {
+    const avg = resource.avgRating || 0;
+    const total = resource.ratings?.length || 0;
+    return (
+      <div style={{marginBottom:"8px"}}>
+        <div style={{display:"flex",gap:"3px",marginBottom:"3px"}}>
+          {[1,2,3,4,5].map(star=>(
+            <span
+              key={star}
+              onClick={()=>rateResource(resource._id, star)}
+              style={{
+                fontSize:"18px",
+                cursor:"pointer",
+                color: star <= Math.round(avg) ? "var(--yellow)" : "var(--border)",
+                transition:"color .15s",
+              }}
+              title={`Rate ${star} star${star>1?"s":""}`}
+            >★</span>
+          ))}
+        </div>
+        <div style={{fontSize:"11px",color:"var(--muted)"}}>
+          {avg > 0 ? `${avg} ⭐ avg · ${total} rating${total!==1?"s":""}` : "No ratings yet"}
+        </div>
+      </div>
+    );
+  };
+  
   const typeIcon = (url) => {
     if (!url) return "📄";
     const ext = url.split(".").pop().toLowerCase();
@@ -319,6 +363,7 @@ function ResourcesPage({ resources, onRefresh, toast }) {
                   {r.resourceType && <span className="tag tag-yellow">{r.resourceType}</span>}
                 </div>
                 <p className="resource-desc">{r.description}</p>
+                {renderStars(r)}
                 <div className="resource-actions">
                   {r.fileUrl
                     ? <a className="btn btn-primary btn-sm" href={`${API}/uploads/${r.fileUrl}`} target="_blank" rel="noreferrer">⬇ Download</a>
