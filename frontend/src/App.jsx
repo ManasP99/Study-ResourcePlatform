@@ -11,6 +11,8 @@ function authHeaders() {
   return { Authorization: `Bearer ${getToken()}` };
 }
 
+
+
 // ─── Toast ─────────────────────────────────────────────────────────────────
 function Toast({ msg, onDone }) {
   useEffect(() => { if (msg) { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); } }, [msg]);
@@ -50,9 +52,11 @@ function AuthPage({ onLogin }) {
         setMode("login");
         setErr("✅ Registered! Please log in.");
       }
-    } catch { setErr("Network error — is backend running?"); }
+    } catch(err) { setErr("Error: " + err.message); }
     finally { setLoading(false); }
   };
+
+  
 
   return (
     <div className="auth-bg">
@@ -697,6 +701,11 @@ export default function App() {
   const [resources, setResources] = useState([]);
   const [tasks,     setTasks]     = useState([]);
   const [toastMsg,  setToastMsg]  = useState("");
+
+  // Wake up Render backend on app load
+  useEffect(() => {
+    fetch(`${API}/health`).catch(()=>{});
+  }, []);
 
   const toast = (msg) => setToastMsg(msg);
 
