@@ -302,7 +302,9 @@ app.post("/resources", authMiddleware, upload.single("file"), async (req, res) =
       title,
       description,
       fileUrl: req.file ? req.file.filename : null,
-      userId: req.user.userId
+      userId: req.user.userId,
+      subject: req.body.subject || "General",
+      resourceType: req.body.resourceType || "Notes"
     });
 
     await resource.save();
