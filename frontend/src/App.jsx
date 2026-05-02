@@ -3,15 +3,13 @@ import "./App.css";
 
 const API = "https://study-resourceplatform.onrender.com";
 
-// ─── helpers ───────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────
 const getToken = () => localStorage.getItem("sn_token");
 const getUser  = () => JSON.parse(localStorage.getItem("sn_user") || "null");
 
 function authHeaders() {
   return { Authorization: `Bearer ${getToken()}` };
 }
-
-
 
 // ─── Toast ─────────────────────────────────────────────────────────────────
 function Toast({ msg, onDone }) {
@@ -204,6 +202,7 @@ function ResourcesPage({ resources, onRefresh, toast }) {
       setTitle(""); setDesc(""); setFile(null);
       toast("✅ Resource uploaded!");
       console.log("Upload response:", data);
+      console.log("Token at refresh time:", getToken());
       onRefresh();
     } catch { toast("❌ Network error"); }
     finally { setLoading(false); }
@@ -715,8 +714,12 @@ export default function App() {
   const fetchResources = async () => {
     try {
       const res = await fetch(`${API}/resources`, { headers: authHeaders() });
-      if (res.status===401) { logout(); return; }
+      if (res.status===401) { 
+        console.log("401 on fetchResources - token:", getToken());
+        return; 
+      }
       const data = await res.json();
+      console.log("fetchResources data:", data);
       setResources(Array.isArray(data) ? data : []);
     } catch {}
   };
