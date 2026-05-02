@@ -340,8 +340,7 @@ app.get("/resources", authMiddleware, async (req, res) => {
 app.delete("/resources/:id", authMiddleware, async (req, res) => {
   try {
     const deleted = await Resource.findOneAndDelete({
-      _id: req.params.id,
-      // userId: req.user.userId
+      _id: req.params.id,           // userId: req.user.userId
     });
 
     if (!deleted) {
