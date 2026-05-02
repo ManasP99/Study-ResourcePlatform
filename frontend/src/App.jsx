@@ -201,8 +201,8 @@ function ResourcesPage({ resources, onRefresh, toast }) {
       if (!res.ok) { toast("❌ " + (data.error || "Upload failed")); return; }
       setTitle(""); setDesc(""); setFile(null);
       toast("✅ Resource uploaded!");
-      console.log("Upload response:", data);
-      console.log("Token at refresh time:", getToken());
+      // console.log("Upload response:", data);   *Just for Debug not for production*
+      // console.log("Token at refresh time:", getToken());        *Just for Debug not for production*
       onRefresh();
     } catch { toast("❌ Network error"); }
     finally { setLoading(false); }
@@ -714,12 +714,13 @@ export default function App() {
   const fetchResources = async () => {
     try {
       const res = await fetch(`${API}/resources`, { headers: authHeaders() });
-      if (res.status===401) { 
-        console.log("401 on fetchResources - token:", getToken());
-        return; 
-      }
+      // if (res.status===401) { 
+      //   // console.log("401 on fetchResources - token:", getToken());  *Just for Debug not for production*
+      //   return; 
+      // }
+      if (res.status===401) { logout(); return; }
       const data = await res.json();
-      console.log("fetchResources data:", data);
+      // console.log("fetchResources data:", data);     *Just for Debug not for production*
       setResources(Array.isArray(data) ? data : []);
     } catch {}
   };
