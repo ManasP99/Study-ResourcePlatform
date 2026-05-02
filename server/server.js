@@ -340,7 +340,8 @@ app.get("/resources", authMiddleware, async (req, res) => {
 app.delete("/resources/:id", authMiddleware, async (req, res) => {
   try {
     const deleted = await Resource.findOneAndDelete({
-      _id: req.params.id,           // userId: req.user.userId
+      _id: req.params.id,
+      // userId: req.user.userId
     });
 
     if (!deleted) {
@@ -354,6 +355,46 @@ app.delete("/resources/:id", authMiddleware, async (req, res) => {
   }
 });
 
+// RATE RESOURCE
+app.post("/resources/:id/rate", authMiddleware, async (req, res) => {
+  try {
+    const { stars } = req.body;
+
+    if (!stars || stars < 1 || stars > 5) {
+      return res.status(400).json({ error: "Stars must be between 1 and 5" });
+    }
+
+    const resource = await Resource.findById(req.params.id);
+
+    if (!resource) {
+      return res.status(404).json({ error: "Resource not found" });
+    }
+
+    // Check if user already rated
+    const existingRating = resource.ratings.find(
+      r => r.userId.toString() === req.user.userId.toString()
+    );
+
+    if (existingRating) {
+      // Update existing rating
+      existingRating.stars = stars;
+    } else {
+      // Add new rating
+      resource.ratings.push({ userId: req.user.userId, stars });
+    }
+
+    await resource.save();
+
+    res.json({
+      message: "Rating saved!",
+      avgRating: resource.avgRating,
+      totalRatings: resource.ratings.length
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ================= TASK APIs =================
 
