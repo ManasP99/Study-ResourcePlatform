@@ -245,7 +245,7 @@ function ResourcesPage({ resources, onRefresh, toast }) {
     (!filterSubject || r.subject === filterSubject) &&
     (!filterType    || r.resourceType === filterType)
   );
-
+// Rating 
   const renderStars = (resource) => {
     const avg = resource.avgRating || 0;
     const total = resource.ratings?.length || 0;
