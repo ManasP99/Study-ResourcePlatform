@@ -192,15 +192,18 @@ function ResourcesPage({ resources, onRefresh, toast }) {
     if (file) fd.append("file", file);
     try {
       const res = await fetch(`${API}/resources`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: fd,
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${getToken()}`
+                  },
+          body: fd,
       });
       if (res.status === 401) { toast("⚠️ Please log in again"); return; }
       const data = await res.json();
       if (!res.ok) { toast("❌ " + (data.error || "Upload failed")); return; }
       setTitle(""); setDesc(""); setFile(null);
       toast("✅ Resource uploaded!");
+      console.log("Upload response:", data);
       onRefresh();
     } catch { toast("❌ Network error"); }
     finally { setLoading(false); }
