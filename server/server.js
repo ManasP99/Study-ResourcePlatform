@@ -97,7 +97,7 @@
 // Newer Version
 // ------------------
 
-// IMPORTS
+// ================= IMPORTS =================
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -108,8 +108,14 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
+// MODELS
 const Task = require("./models/Task");
 const Resource = require("./models/Resource");
+const User = require("./models/User");
+
+// AUTH LIBS
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 
@@ -142,7 +148,8 @@ const upload = multer({ storage });
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://study-resource-platform.vercel.app"
+  "https://study-resource-platform.vercel.app",
+  "https://study-resourceplatform.onrender.com"
 ];
 
 app.use(cors({
@@ -154,6 +161,7 @@ app.use(cors({
     }
   }
 }));
+
 
 // ================= MIDDLEWARE =================
 
@@ -171,6 +179,32 @@ mongoose
   });
 
 
+// ================= AUTH MIDDLEWARE =================
+
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  // Expecting: Bearer TOKEN
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Invalid token format" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
+};
+
+
 // ================= ROUTES =================
 
 // Home
@@ -178,20 +212,88 @@ app.get("/", (req, res) => {
   res.send("College Resource API Running");
 });
 
-// Health check (VERY useful)
+// Health check
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "OK" });
 });
 
 
+// ================= AUTH APIs =================
+
+// REGISTER
+app.post("/auth/register", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword
+    });
+
+    await user.save();
+
+    res.json({ message: "User registered successfully" });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// LOGIN
+app.post("/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ error: "Wrong password" });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.json({ token });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // ================= RESOURCE APIs =================
 
-// CREATE RESOURCE WITH FILE
-app.post("/resources", upload.single("file"), async (req, res) => {
+// CREATE RESOURCE (Protected)
+app.post("/resources", authMiddleware, upload.single("file"), async (req, res) => {
   try {
     const { title, description } = req.body;
 
-    // ✅ VALIDATION
     if (!title || !description) {
       return res.status(400).json({ error: "Title and description required" });
     }
@@ -199,7 +301,8 @@ app.post("/resources", upload.single("file"), async (req, res) => {
     const resource = new Resource({
       title,
       description,
-      fileUrl: req.file ? req.file.filename : null
+      fileUrl: req.file ? req.file.filename : null,
+      userId: req.user.userId
     });
 
     await resource.save();
@@ -215,22 +318,35 @@ app.post("/resources", upload.single("file"), async (req, res) => {
 });
 
 
-// GET ALL RESOURCES
-app.get("/resources", async (req, res) => {
+// GET RESOURCES (User-specific)
+app.get("/resources", authMiddleware, async (req, res) => {
   try {
-    const resources = await Resource.find().sort({ _id: -1 });
+    const resources = await Resource.find({
+      userId: req.user.userId
+    }).sort({ createdAt: -1 });
+
     res.json(resources);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 
-// DELETE RESOURCE
-app.delete("/resources/:id", async (req, res) => {
+// DELETE RESOURCE (Secure)
+app.delete("/resources/:id", authMiddleware, async (req, res) => {
   try {
-    await Resource.findByIdAndDelete(req.params.id);
+    const deleted = await Resource.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.userId
+    });
+
+    if (!deleted) {
+      return res.status(404).json({ error: "Resource not found or unauthorized" });
+    }
+
     res.json({ message: "Deleted successfully" });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -239,12 +355,11 @@ app.delete("/resources/:id", async (req, res) => {
 
 // ================= TASK APIs =================
 
-// Create Task
+// CREATE TASK
 app.post("/tasks", async (req, res) => {
   try {
     const { text } = req.body;
 
-    // ✅ VALIDATION
     if (!text) {
       return res.status(400).json({ error: "Task text required" });
     }
@@ -259,10 +374,11 @@ app.post("/tasks", async (req, res) => {
   }
 });
 
-// Get All Tasks
+
+// GET TASKS
 app.get("/tasks", async (req, res) => {
   try {
-    const tasks = await Task.find().sort({ _id: -1 });
+    const tasks = await Task.find().sort({ createdAt: -1 });
     res.json(tasks);
 
   } catch (err) {
@@ -270,7 +386,8 @@ app.get("/tasks", async (req, res) => {
   }
 });
 
-// Update Task
+
+// UPDATE TASK
 app.put("/tasks/:id", async (req, res) => {
   try {
     const updatedTask = await Task.findByIdAndUpdate(
@@ -280,16 +397,19 @@ app.put("/tasks/:id", async (req, res) => {
     );
 
     res.json(updatedTask);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Delete Task
+
+// DELETE TASK
 app.delete("/tasks/:id", async (req, res) => {
   try {
     await Task.findByIdAndDelete(req.params.id);
     res.json({ message: "Task deleted" });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
