@@ -14,6 +14,20 @@ const resourceSchema = new mongoose.Schema({
   fileUrl: {
     type: String,
     default: null
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  },
+  subject: {
+    type: String,
+    default: "General",
+    trim: true
+  },
+  resourceType: {
+    type: String,
+    default: "Notes",
+    enum: ["Notes", "PDF", "Paper", "PPT", "Other"]
   }
 }, {
   timestamps: true
