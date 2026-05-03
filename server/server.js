@@ -361,7 +361,8 @@ app.post("/resources/:id/download", authMiddleware, async (req, res) => {
     const resource = await Resource.findByIdAndUpdate(
       req.params.id,
       { $inc: { downloadCount: 1 } },
-      { new: true }
+      //{ new: true }
+      { returnDocument: 'after' }
     );
     if (!resource) {
       return res.status(404).json({ error: "Resource not found" });
@@ -439,7 +440,6 @@ app.post("/tasks", async (req, res) => {
   }
 });
 
-
 // GET TASKS
 app.get("/tasks", async (req, res) => {
   try {
@@ -458,7 +458,8 @@ app.put("/tasks/:id", async (req, res) => {
     const updatedTask = await Task.findByIdAndUpdate(
       req.params.id,
       { completed: req.body.completed },
-      { new: true }
+      // { new: true }
+      { returnDocument: 'after' }
     );
 
     res.json(updatedTask);
