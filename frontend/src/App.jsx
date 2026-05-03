@@ -343,7 +343,7 @@ function ResourcesPage({ resources, onRefresh, toast }) {
                 <div className="resource-actions" style={{marginTop:"12px"}}>
                   {r.fileUrl
                     ? <a className="btn btn-primary btn-sm"
-                        href={r.fileUrl}          //href={`${API}/uploads/${r.fileUrl}`}
+                        href={`${API}/uploads/${r.fileUrl}`}
                         target="_blank" rel="noreferrer"
                         onClick={()=>trackDownload(r._id)}>⬇ Download</a>
                     : <span className="tag tag-muted">No file</span>
@@ -842,7 +842,7 @@ function AdminPage({ resources, tasks, onRefresh, toast }) {
                   <td><strong>{r.title}</strong></td>
                   <td className="muted">{r.description?.slice(0,50)}{r.description?.length>50?"…":""}</td>
                   <td>{r.fileUrl
-                    ? <a className="tag tag-purple" href={r.fileUrl} target="_blank" rel="noreferrer">⬇ File</a>
+                    ? <a className="tag tag-purple" href={`${API}/uploads/${r.fileUrl}`} target="_blank" rel="noreferrer">⬇ File</a>
                     : <span className="tag tag-muted">—</span>}
                   </td>
                   <td><button className="btn btn-danger btn-sm" onClick={()=>delRes(r._id)}>🗑 Delete</button></td>
