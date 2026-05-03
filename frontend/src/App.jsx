@@ -44,9 +44,10 @@ function AuthPage({ onLogin }) {
       if (!res.ok) { setErr(data.error || "Something went wrong"); return; }
       if (mode === "login") {
         localStorage.setItem("sn_token", data.token);
-        const firstName = email.split("@")[0].split(/[._]/)[0];
-        const capitalized = firstName.charAt(0).toUpperCase() + firstName.slice(1);
-        localStorage.setItem("sn_user", JSON.stringify({ email, name: capitalized }));
+        localStorage.setItem("sn_user", JSON.stringify({ 
+        email, 
+        name: data.name || email.split("@")[0] 
+        }));
         onLogin();
       } else {
         setMode("login");
