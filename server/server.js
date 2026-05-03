@@ -279,7 +279,7 @@ app.post("/auth/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.json({ token });
+    res.json({ token, name: user.name });
 
   } catch (err) {
     res.status(500).json({ error: err.message });
