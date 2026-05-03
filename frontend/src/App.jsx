@@ -345,6 +345,7 @@ function ResourcesPage({ resources, onRefresh, toast }) {
                     ? <a className="btn btn-primary btn-sm"
                         href={`${API}/uploads/${r.fileUrl}`}
                         target="_blank" rel="noreferrer"
+                        download
                         onClick={()=>trackDownload(r._id)}>⬇ Download</a>
                     : <span className="tag tag-muted">No file</span>
                   }
