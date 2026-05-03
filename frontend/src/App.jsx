@@ -173,16 +173,17 @@ function Dashboard({ resources, tasks }) {
 //  RESOURCES PAGE
 // ═══════════════════════════════════════════════════════════════════════════
 function ResourcesPage({ resources, onRefresh, toast }) {
-  const [title, setTitle]   = useState("");
-  const [desc,  setDesc]    = useState("");
-  const [file,  setFile]    = useState(null);
-  const [search,setSearch]  = useState("");
-  const [loading,setLoading]= useState(false);
-  const [drag,      setDrag]        = useState(false);
-  const [subject,   setSubject]     = useState("General");
+  const [title, setTitle]         = useState("");
+  const [desc,  setDesc]          = useState("");
+  const [file,  setFile]          = useState(null);
+  const [search,setSearch]        = useState("");
+  const [loading,setLoading]      = useState(false);
+  const [drag,  setDrag]          = useState(false);
+  const [subject, setSubject]     = useState("General");
   const [resourceType, setResourceType] = useState("Notes");
   const [filterSubject, setFilterSubject] = useState("");
   const [filterType,    setFilterType]    = useState("");
+  const [showModal, setShowModal] = useState(false);
   const fileRef = useRef();
 
   const upload = async () => {
@@ -196,19 +197,16 @@ function ResourcesPage({ resources, onRefresh, toast }) {
     if (file) fd.append("file", file);
     try {
       const res = await fetch(`${API}/resources`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${getToken()}`
-                  },
-          body: fd,
+        method: "POST",
+        headers: { "Authorization": `Bearer ${getToken()}` },
+        body: fd,
       });
       if (res.status === 401) { toast("⚠️ Please log in again"); return; }
       const data = await res.json();
       if (!res.ok) { toast("❌ " + (data.error || "Upload failed")); return; }
       setTitle(""); setDesc(""); setFile(null);
+      setShowModal(false);
       toast("✅ Resource uploaded!");
-      // console.log("Upload response:", data);   *Just for Debug not for production*
-      // console.log("Token at refresh time:", getToken());        *Just for Debug not for production*
       onRefresh();
     } catch { toast("❌ Network error"); }
     finally { setLoading(false); }
@@ -230,7 +228,7 @@ function ResourcesPage({ resources, onRefresh, toast }) {
       onRefresh();
     } catch { toast("❌ Network error"); }
   };
-  
+
   const del = async (id) => {
     if (!window.confirm("Delete this resource?")) return;
     try {
@@ -245,25 +243,17 @@ function ResourcesPage({ resources, onRefresh, toast }) {
     (!filterSubject || r.subject === filterSubject) &&
     (!filterType    || r.resourceType === filterType)
   );
-// Rating 
+
   const renderStars = (resource) => {
     const avg = resource.avgRating || 0;
     const total = resource.ratings?.length || 0;
     return (
-      <div style={{marginBottom:"8px"}}>
-        <div style={{display:"flex",gap:"3px",marginBottom:"3px"}}>
+      <div style={{margin:"8px 0"}}>
+        <div style={{display:"flex",gap:"2px",marginBottom:"3px"}}>
           {[1,2,3,4,5].map(star=>(
-            <span
-              key={star}
-              onClick={()=>rateResource(resource._id, star)}
-              style={{
-                fontSize:"18px",
-                cursor:"pointer",
-                color: star <= Math.round(avg) ? "var(--yellow)" : "var(--border)",
-                transition:"color .15s",
-              }}
-              title={`Rate ${star} star${star>1?"s":""}`}
-            >★</span>
+            <span key={star} onClick={()=>rateResource(resource._id, star)}
+              style={{fontSize:"16px",cursor:"pointer",color:star<=Math.round(avg)?"var(--yellow)":"var(--border)",transition:"color .15s"}}
+              title={`Rate ${star} star${star>1?"s":""}`}>★</span>
           ))}
         </div>
         <div style={{fontSize:"11px",color:"var(--muted)"}}>
@@ -272,7 +262,7 @@ function ResourcesPage({ resources, onRefresh, toast }) {
       </div>
     );
   };
-  
+
   const typeIcon = (url) => {
     if (!url) return "📄";
     const ext = url.split(".").pop().toLowerCase();
@@ -283,90 +273,68 @@ function ResourcesPage({ resources, onRefresh, toast }) {
     return "📄";
   };
 
+  const SUBJECTS = ["General","Python","C/C++","HTML/CSS","JavaScript","React","DBMS","Math","Other"];
+  const TYPES    = ["Notes","PDF","Paper","PPT","Other"];
+
   return (
     <div>
-      <div className="page-header">
-        <h2 className="page-title">📂 Resource Hub</h2>
-        <p className="page-sub">Upload, search and download study materials</p>
-      </div>
-
-      {/* Upload card */}
-      <div className="card mb24">
-        <h3 className="section-title">Upload New Resource</h3>
-        <div className="grid-2">
-          <div className="form-group">
-            <label>Title *</label>
-            <input placeholder="e.g. Python OOP Notes" value={title} onChange={e=>setTitle(e.target.value)}/>
-          </div>
-          <div className="form-group">
-            <label>Description *</label>
-            <input placeholder="Brief description…" value={desc} onChange={e=>setDesc(e.target.value)}/>
-          </div>
-          <div className="form-group">
-            <label>Subject</label>
-            <select value={subject} onChange={e=>setSubject(e.target.value)}>
-              {["General","Python","C/C++","HTML/CSS","JavaScript","React","DBMS","Math","Other"].map(s=><option key={s}>{s}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Type</label>
-            <select value={resourceType} onChange={e=>setResourceType(e.target.value)}>
-              {["Notes","PDF","Paper","PPT","Other"].map(t=><option key={t}>{t}</option>)}
-            </select>
-          </div>
+      {/* PAGE HEADER */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"24px"}}>
+        <div>
+          <h2 className="page-title">📂 Resource Hub</h2>
+          <p className="page-sub">Upload, search and download study materials</p>
         </div>
-        <div className="form-group">
-          <label>File (optional)</label>
-          <div className={`dropzone${drag?" drag":""}`}
-            onClick={()=>fileRef.current.click()}
-            onDragOver={e=>{e.preventDefault();setDrag(true)}}
-            onDragLeave={()=>setDrag(false)}
-            onDrop={e=>{e.preventDefault();setDrag(false);setFile(e.dataTransfer.files[0])}}>
-            <div className="dz-icon">📁</div>
-            <p><strong>Click to browse</strong> or drag & drop</p>
-            <p style={{fontSize:"12px",color:"var(--muted)"}}>PDF, PPT, DOC, ZIP</p>
-            {file && <p style={{color:"var(--accent3)",marginTop:"8px",fontSize:"13px"}}>✅ {file.name}</p>}
-            <input type="file" ref={fileRef} style={{display:"none"}} onChange={e=>setFile(e.target.files[0])}/>
-          </div>
-        </div>
-        <button className="btn btn-primary" onClick={upload} disabled={loading}>
-          {loading ? "Uploading…" : "⬆ Upload Resource"}
+        <button className="btn btn-primary" onClick={()=>setShowModal(true)}>
+          ⬆ Upload
         </button>
       </div>
 
-      {/* Search + Filters */}
+      {/* SEARCH + FILTERS */}
       <div style={{display:"flex",gap:"12px",marginBottom:"24px",flexWrap:"wrap"}}>
-        <input style={{flex:1,minWidth:"200px",background:"var(--card)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:"10px",padding:"10px 14px",fontFamily:"inherit",fontSize:"14px",outline:"none"}}
-          placeholder="🔍  Search by title or description…" value={search} onChange={e=>setSearch(e.target.value)}/>
-        <select style={{width:"150px",background:"var(--card2)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:"10px",padding:"10px 14px",fontFamily:"inherit",fontSize:"14px",outline:"none"}}
+        <input
+          style={{flex:1,minWidth:"200px",background:"var(--card)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:"10px",padding:"10px 14px",fontFamily:"inherit",fontSize:"14px",outline:"none"}}
+          placeholder="🔍  Search resources by name or subject…"
+          value={search} onChange={e=>setSearch(e.target.value)}/>
+        <select
+          style={{width:"160px",background:"var(--card2)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:"10px",padding:"10px 14px",fontFamily:"inherit",fontSize:"14px",outline:"none"}}
           value={filterSubject} onChange={e=>setFilterSubject(e.target.value)}>
           <option value="">All Subjects</option>
-          {["General","Python","C/C++","HTML/CSS","JavaScript","React","DBMS","Math","Other"].map(s=><option key={s}>{s}</option>)}
+          {SUBJECTS.map(s=><option key={s}>{s}</option>)}
         </select>
-        <select style={{width:"130px",background:"var(--card2)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:"10px",padding:"10px 14px",fontFamily:"inherit",fontSize:"14px",outline:"none"}}
+        <select
+          style={{width:"130px",background:"var(--card2)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:"10px",padding:"10px 14px",fontFamily:"inherit",fontSize:"14px",outline:"none"}}
           value={filterType} onChange={e=>setFilterType(e.target.value)}>
           <option value="">All Types</option>
-          {["Notes","PDF","Paper","PPT","Other"].map(t=><option key={t}>{t}</option>)}
+          {TYPES.map(t=><option key={t}>{t}</option>)}
         </select>
       </div>
 
-      {/* Grid */}
+      {/* RESOURCE GRID */}
       {filtered.length === 0
         ? <div className="empty-state">No resources found. Upload your first one!</div>
         : <div className="grid-3">
             {filtered.map(r=>(
               <div key={r._id} className="resource-card">
-                <div className="resource-icon">{typeIcon(r.fileUrl)}</div>
-                <div className="resource-title">{r.title}</div>
-                <div style={{display:"flex",gap:"6px",margin:"6px 0"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"12px"}}>
+                  <div style={{fontSize:"36px"}}>{typeIcon(r.fileUrl)}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div className="resource-title" style={{fontSize:"16px",marginBottom:"4px"}}>{r.title}</div>
+                    <div style={{fontSize:"12px",color:"var(--muted)"}}>
+                      {r.subject} · {r.resourceType}
+                    </div>
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:"6px",marginBottom:"8px",flexWrap:"wrap"}}>
                   {r.subject && <span className="tag tag-purple">{r.subject}</span>}
                   {r.resourceType && <span className="tag tag-yellow">{r.resourceType}</span>}
                 </div>
-                <p className="resource-desc">{r.description}</p>
+                <p className="resource-desc" style={{marginBottom:"10px"}}>{r.description}</p>
                 {renderStars(r)}
-                <div className="resource-actions">
+                <div className="resource-actions" style={{marginTop:"12px"}}>
                   {r.fileUrl
-                    ? <a className="btn btn-primary btn-sm" href={`${API}/uploads/${r.fileUrl}`} target="_blank" rel="noreferrer">⬇ Download</a>
+                    ? <a className="btn btn-primary btn-sm"
+                        href={`${API}/uploads/${r.fileUrl}`}
+                        target="_blank" rel="noreferrer">⬇ Download</a>
                     : <span className="tag tag-muted">No file</span>
                   }
                   <button className="btn btn-danger btn-sm" onClick={()=>del(r._id)}>🗑 Delete</button>
@@ -375,6 +343,77 @@ function ResourcesPage({ resources, onRefresh, toast }) {
             ))}
           </div>
       }
+
+      {/* UPLOAD MODAL */}
+      {showModal && (
+        <div
+          style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(6px)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}
+          onClick={e=>{ if(e.target===e.currentTarget) setShowModal(false); }}>
+          <div style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:"20px",padding:"32px",width:"100%",maxWidth:"520px",maxHeight:"90vh",overflowY:"auto",animation:"fadeUp .3s ease"}}>
+
+            {/* Modal Header */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"24px"}}>
+              <h3 style={{fontSize:"20px",fontWeight:800}}>📤 Upload Resource</h3>
+              <button onClick={()=>setShowModal(false)}
+                style={{background:"none",border:"none",color:"var(--muted)",fontSize:"22px",cursor:"pointer",lineHeight:1}}>✕</button>
+            </div>
+
+            {/* Title */}
+            <div className="form-group">
+              <label>Title</label>
+              <input placeholder="e.g. Python OOP Notes" value={title} onChange={e=>setTitle(e.target.value)}/>
+            </div>
+
+            {/* Subject + Type */}
+            <div className="grid-2">
+              <div className="form-group">
+                <label>Subject</label>
+                <select value={subject} onChange={e=>setSubject(e.target.value)}>
+                  {SUBJECTS.map(s=><option key={s}>{s}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Type</label>
+                <select value={resourceType} onChange={e=>setResourceType(e.target.value)}>
+                  {TYPES.map(t=><option key={t}>{t}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="form-group">
+              <label>Description</label>
+              <textarea rows={3} placeholder="Brief description of the resource…"
+                value={desc} onChange={e=>setDesc(e.target.value)}
+                style={{background:"var(--card2)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:"10px",padding:"10px 14px",fontFamily:"inherit",fontSize:"14px",width:"100%",outline:"none",resize:"vertical"}}/>
+            </div>
+
+            {/* File Drop */}
+            <div className="form-group">
+              <label>File (optional)</label>
+              <div className={`dropzone${drag?" drag":""}`}
+                onClick={()=>fileRef.current.click()}
+                onDragOver={e=>{e.preventDefault();setDrag(true)}}
+                onDragLeave={()=>setDrag(false)}
+                onDrop={e=>{e.preventDefault();setDrag(false);setFile(e.dataTransfer.files[0])}}>
+                <div className="dz-icon">📁</div>
+                <p><strong>Click to browse</strong> or drag & drop file here</p>
+                <p style={{fontSize:"12px",color:"var(--muted)"}}>PDF, PPT, DOC, ZIP — up to 25MB</p>
+                {file && <p style={{color:"var(--accent3)",marginTop:"8px",fontSize:"13px"}}>✅ {file.name}</p>}
+                <input type="file" ref={fileRef} style={{display:"none"}} onChange={e=>setFile(e.target.files[0])}/>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{display:"flex",gap:"10px",justifyContent:"flex-end",marginTop:"8px"}}>
+              <button className="btn btn-ghost" onClick={()=>setShowModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={upload} disabled={loading}>
+                {loading ? "Uploading…" : "Upload Resource"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
