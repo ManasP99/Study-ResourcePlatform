@@ -401,13 +401,18 @@ app.post("/resources/:id/rate", authMiddleware, async (req, res) => {
 // CREATE TASK
 app.post("/tasks", async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, subject, priority, dueDate } = req.body;
 
     if (!text) {
       return res.status(400).json({ error: "Task text required" });
     }
 
-    const task = new Task({ text });
+    const task = new Task({
+      text,
+      subject: subject || "General",
+      priority: priority || "medium",
+      dueDate: dueDate || null
+    });
     await task.save();
 
     res.status(201).json(task);
