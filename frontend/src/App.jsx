@@ -422,8 +422,18 @@ function ResourcesPage({ resources, onRefresh, toast }) {
 //  TASKS / TO-DO PAGE
 // ═══════════════════════════════════════════════════════════════════════════
 function TasksPage({ tasks, onRefresh, toast }) {
-  const [text,    setText]   = useState("");
-  const [filter,  setFilter] = useState("all");
+  const [text,     setText]    = useState("");
+  const [subject,  setSubject] = useState("General");
+  const [priority, setPriority]= useState("medium");
+  const [dueDate,  setDueDate] = useState("");
+  const [filter,   setFilter]  = useState("all");
+
+  const SUBJECTS  = ["General","Python","C/C++","HTML/CSS","JavaScript","React","DBMS","Math","Other"];
+  const PRIORITIES = [
+    { val:"high",   label:"🔴 High",   color:"var(--red)"     },
+    { val:"medium", label:"🟡 Medium", color:"var(--yellow)"  },
+    { val:"low",    label:"🟢 Low",    color:"var(--accent3)" },
+  ];
 
   const add = async () => {
     if (!text.trim()) { toast("⚠️ Enter a task"); return; }
@@ -431,9 +441,11 @@ function TasksPage({ tasks, onRefresh, toast }) {
       await fetch(`${API}/tasks`, {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, subject, priority, dueDate: dueDate||null }),
       });
-      setText(""); onRefresh(); toast("✅ Task added!");
+      setText(""); setSubject("General"); setPriority("medium"); setDueDate("");
+      onRefresh();
+      toast("✅ Task added!");
     } catch { toast("❌ Network error"); }
   };
 
@@ -459,6 +471,9 @@ function TasksPage({ tasks, onRefresh, toast }) {
     filter==="all" ? true : filter==="done" ? t.completed : !t.completed
   );
 
+  const priorityColor = { high:"var(--red)", medium:"var(--yellow)", low:"var(--accent3)" };
+  const priorityBg    = { high:"rgba(239,71,111,.15)", medium:"rgba(255,209,102,.15)", low:"rgba(67,233,123,.15)" };
+
   return (
     <div>
       <div className="page-header">
@@ -467,6 +482,7 @@ function TasksPage({ tasks, onRefresh, toast }) {
       </div>
 
       <div className="grid-2">
+        {/* ADD TASK CARD */}
         <div className="card">
           <h3 className="section-title">Add New Task</h3>
           <div className="form-group">
@@ -475,9 +491,28 @@ function TasksPage({ tasks, onRefresh, toast }) {
               value={text} onChange={e=>setText(e.target.value)}
               onKeyDown={e=>e.key==="Enter"&&add()}/>
           </div>
-          <button className="btn btn-primary" onClick={add}>+ Add Task</button>
+          <div className="grid-2">
+            <div className="form-group">
+              <label>Subject</label>
+              <select value={subject} onChange={e=>setSubject(e.target.value)}>
+                {SUBJECTS.map(s=><option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Priority</label>
+              <select value={priority} onChange={e=>setPriority(e.target.value)}>
+                {PRIORITIES.map(p=><option key={p.val} value={p.val}>{p.label}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Due Date</label>
+            <input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)}/>
+          </div>
+          <button className="btn btn-primary" style={{width:"100%"}} onClick={add}>+ Add Task</button>
         </div>
 
+        {/* TASK LIST CARD */}
         <div className="card">
           <div className="tasks-header">
             <h3 className="section-title">My Tasks ({shown.length})</h3>
@@ -493,11 +528,28 @@ function TasksPage({ tasks, onRefresh, toast }) {
             {shown.length===0
               ? <p className="muted" style={{textAlign:"center",padding:"20px"}}>No tasks here.</p>
               : shown.map(t=>(
-                <div key={t._id} className={`todo-item${t.completed?" done":""}`}>
+                <div key={t._id} className={`todo-item${t.completed?" done":""}`}
+                  style={{alignItems:"flex-start",gap:"10px"}}>
                   <input type="checkbox" className="todo-checkbox"
+                    style={{marginTop:"3px",flexShrink:0}}
                     checked={t.completed} onChange={()=>toggle(t._id, t.completed)}/>
-                  <span className="todo-text">{t.text}</span>
-                  <button className="icon-btn" onClick={()=>del(t._id)}>🗑</button>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div className="todo-text" style={{marginBottom:"4px"}}>{t.text}</div>
+                    <div style={{fontSize:"11px",color:"var(--muted)"}}>
+                      {t.subject && <span>{t.subject}</span>}
+                      {t.dueDate && <span> · Due: {t.dueDate}</span>}
+                    </div>
+                  </div>
+                  {t.priority && (
+                    <span style={{
+                      fontSize:"10px", fontWeight:700, padding:"3px 8px",
+                      borderRadius:"6px", flexShrink:0,
+                      background: priorityBg[t.priority]||priorityBg.medium,
+                      color: priorityColor[t.priority]||priorityColor.medium,
+                      textTransform:"uppercase", letterSpacing:".3px"
+                    }}>{t.priority}</span>
+                  )}
+                  <button className="icon-btn" style={{flexShrink:0}} onClick={()=>del(t._id)}>🗑</button>
                 </div>
               ))
             }
