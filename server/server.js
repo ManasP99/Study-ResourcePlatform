@@ -355,6 +355,23 @@ app.delete("/resources/:id", authMiddleware, async (req, res) => {
   }
 });
 
+// DOWNLOAD COUNTER
+app.post("/resources/:id/download", authMiddleware, async (req, res) => {
+  try {
+    const resource = await Resource.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { downloadCount: 1 } },
+      { new: true }
+    );
+    if (!resource) {
+      return res.status(404).json({ error: "Resource not found" });
+    }
+    res.json({ downloadCount: resource.downloadCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // RATE RESOURCE
 app.post("/resources/:id/rate", authMiddleware, async (req, res) => {
   try {
