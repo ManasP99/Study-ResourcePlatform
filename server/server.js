@@ -105,8 +105,8 @@ const mongoose = require("mongoose");
 
 // FILE UPLOAD
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 // MODELS
 const Task = require("./models/Task");
@@ -120,24 +120,22 @@ const jwt = require("jsonwebtoken");
 const app = express();
 
 
-// ================= FILE UPLOAD SETUP =================
+// ================= CLOUDINARY SETUP =================
 
-const uploadPath = path.join(__dirname, "uploads");
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath, { recursive: true });
-}
-
-// Serve uploaded files
-app.use("/uploads", express.static(uploadPath));
-
-// Multer config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: "study-nest",
+      resource_type: "raw",
+      public_id: Date.now() + "-" + file.originalname.replace(/\s+/g, "_"),
+    };
   },
 });
 
@@ -188,7 +186,6 @@ const authMiddleware = (req, res, next) => {
     return res.status(401).json({ error: "No token provided" });
   }
 
-  // Expecting: Bearer TOKEN
   const token = authHeader.split(" ")[1];
 
   if (!token) {
@@ -301,7 +298,7 @@ app.post("/resources", authMiddleware, upload.single("file"), async (req, res) =
     const resource = new Resource({
       title,
       description,
-      fileUrl: req.file ? req.file.filename : null,
+      fileUrl: req.file ? req.file.path : null,
       userId: req.user.userId,
       subject: req.body.subject || "General",
       resourceType: req.body.resourceType || "Notes"
@@ -320,28 +317,22 @@ app.post("/resources", authMiddleware, upload.single("file"), async (req, res) =
 });
 
 
-// GET RESOURCES (User-specific)
+// GET RESOURCES
 app.get("/resources", authMiddleware, async (req, res) => {
   try {
-    // const resources = await Resource.find({
-    //   userId: req.user.userId
-    // }).sort({ createdAt: -1 });
     const resources = await Resource.find({}).sort({ createdAt: -1 });
-
     res.json(resources);
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 
-// DELETE RESOURCE (Secure)
+// DELETE RESOURCE
 app.delete("/resources/:id", authMiddleware, async (req, res) => {
   try {
     const deleted = await Resource.findOneAndDelete({
       _id: req.params.id,
-      // userId: req.user.userId
     });
 
     if (!deleted) {
@@ -361,7 +352,6 @@ app.post("/resources/:id/download", authMiddleware, async (req, res) => {
     const resource = await Resource.findByIdAndUpdate(
       req.params.id,
       { $inc: { downloadCount: 1 } },
-      //{ new: true }
       { returnDocument: 'after' }
     );
     if (!resource) {
@@ -388,16 +378,13 @@ app.post("/resources/:id/rate", authMiddleware, async (req, res) => {
       return res.status(404).json({ error: "Resource not found" });
     }
 
-    // Check if user already rated
     const existingRating = resource.ratings.find(
       r => r.userId.toString() === req.user.userId.toString()
     );
 
     if (existingRating) {
-      // Update existing rating
       existingRating.stars = stars;
     } else {
-      // Add new rating
       resource.ratings.push({ userId: req.user.userId, stars });
     }
 
@@ -413,6 +400,7 @@ app.post("/resources/:id/rate", authMiddleware, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ================= TASK APIs =================
 
@@ -445,12 +433,10 @@ app.get("/tasks", async (req, res) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 });
     res.json(tasks);
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // UPDATE TASK
 app.put("/tasks/:id", async (req, res) => {
@@ -458,24 +444,19 @@ app.put("/tasks/:id", async (req, res) => {
     const updatedTask = await Task.findByIdAndUpdate(
       req.params.id,
       { completed: req.body.completed },
-      // { new: true }
       { returnDocument: 'after' }
     );
-
     res.json(updatedTask);
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // DELETE TASK
 app.delete("/tasks/:id", async (req, res) => {
   try {
     await Task.findByIdAndDelete(req.params.id);
     res.json({ message: "Task deleted" });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
