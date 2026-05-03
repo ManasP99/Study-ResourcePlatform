@@ -212,6 +212,16 @@ function ResourcesPage({ resources, onRefresh, toast }) {
     finally { setLoading(false); }
   };
 
+  const trackDownload = async (id) => {
+    try {
+      await fetch(`${API}/resources/${id}/download`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${getToken()}` }
+      });
+      onRefresh();
+    } catch {}
+  };
+  
   const rateResource = async (id, stars) => {
     try {
       const res = await fetch(`${API}/resources/${id}/rate`, {
@@ -320,7 +330,7 @@ function ResourcesPage({ resources, onRefresh, toast }) {
                   <div style={{flex:1,minWidth:0}}>
                     <div className="resource-title" style={{fontSize:"16px",marginBottom:"4px"}}>{r.title}</div>
                     <div style={{fontSize:"12px",color:"var(--muted)"}}>
-                      {r.subject} · {r.resourceType}
+                      {r.subject} · {r.resourceType} · ⬇ {r.downloadCount||0} downloads
                     </div>
                   </div>
                 </div>
@@ -334,7 +344,8 @@ function ResourcesPage({ resources, onRefresh, toast }) {
                   {r.fileUrl
                     ? <a className="btn btn-primary btn-sm"
                         href={`${API}/uploads/${r.fileUrl}`}
-                        target="_blank" rel="noreferrer">⬇ Download</a>
+                        target="_blank" rel="noreferrer"
+                        onClick={()=>trackDownload(r._id)}>⬇ Download</a>
                     : <span className="tag tag-muted">No file</span>
                   }
                   <button className="btn btn-danger btn-sm" onClick={()=>del(r._id)}>🗑 Delete</button>
