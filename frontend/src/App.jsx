@@ -44,7 +44,9 @@ function AuthPage({ onLogin }) {
       if (!res.ok) { setErr(data.error || "Something went wrong"); return; }
       if (mode === "login") {
         localStorage.setItem("sn_token", data.token);
-        localStorage.setItem("sn_user", JSON.stringify({ email, name: email.split("@")[0] }));
+        const firstName = email.split("@")[0].split(/[._]/)[0];
+        const capitalized = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+        localStorage.setItem("sn_user", JSON.stringify({ email, name: capitalized }));
         onLogin();
       } else {
         setMode("login");
@@ -59,7 +61,7 @@ function AuthPage({ onLogin }) {
   return (
     <div className="auth-bg">
       <div className="auth-card">
-        <div className="auth-logo">Study<span>Nest</span></div>
+        <div className="auth-logo">Edu<span>Flow</span></div>
         <p className="auth-sub">Your all-in-one study companion</p>
 
         <div className="auth-tabs">
@@ -108,7 +110,7 @@ function Dashboard({ resources, tasks }) {
       <div className="topbar">
         <div>
           <h2 className="page-title">Good day, {user?.name || "Student"} 👋</h2>
-          <p className="page-sub">BCA Final Year · Let's keep studying!</p>
+          <p className="page-sub">Let's keep studying! 📚</p>
         </div>
       </div>
 
@@ -945,7 +947,7 @@ export default function App() {
     <div className="app-shell">
       {/* SIDEBAR */}
       <nav className="sidebar">
-        <div className="logo">Study<span>Nest</span></div>
+        <div className="logo">Edu<span>Flow</span></div>
         {navItems.map((n,i)=>
           n===null
             ? <hr key={i} className="nav-divider"/>
@@ -958,7 +960,7 @@ export default function App() {
             <div className="avatar">{(user?.name||"U")[0].toUpperCase()}</div>
             <div>
               <div style={{fontSize:"13px",fontWeight:600}}>{user?.name||"Student"}</div>
-              <div style={{fontSize:"11px",color:"var(--muted)"}}>BCA Final Year</div>
+              <div style={{fontSize:"11px",color:"var(--muted)"}}>Student</div>
             </div>
           </div>
           <button className="btn btn-ghost btn-sm" style={{width:"100%",marginTop:"8px"}} onClick={logout}>🚪 Logout</button>
