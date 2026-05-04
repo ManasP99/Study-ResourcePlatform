@@ -1018,16 +1018,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* TOP NAVBAR */}
-      <div style={{
-        position:"fixed", top:0, left:0, right:0, height:"56px",
-        background:"var(--card)", borderBottom:"1px solid var(--border)",
-        display:"flex", alignItems:"center", padding:"0 20px",
-        zIndex:140, gap:"16px"
-      }}>
-        <div className="logo" style={{fontSize:"20px"}}>Edu<span>Flow</span></div>
-      </div>
-
       {/* MAIN */}
       <main className="main">
         {page==="dashboard" && <Dashboard resources={resources} tasks={tasks}/>}
