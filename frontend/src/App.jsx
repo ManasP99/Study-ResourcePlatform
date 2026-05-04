@@ -952,7 +952,7 @@ export default function App() {
       <button
         onClick={()=>setSidebarOpen(o=>!o)}
         style={{
-          position:"fixed", top:"16px", left:"16px", zIndex:200,
+          position:"fixed", top:"16px", right:"16px", zIndex:200,
           background:"var(--card)", border:"1px solid var(--border)",
           borderRadius:"10px", padding:"8px 10px", cursor:"pointer",
           fontSize:"18px", color:"var(--text)", lineHeight:1
