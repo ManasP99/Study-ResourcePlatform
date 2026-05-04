@@ -952,7 +952,7 @@ export default function App() {
       <button
         onClick={()=>setSidebarOpen(o=>!o)}
         style={{
-          position:"fixed", top:"16px", right:"16px", zIndex:200,
+          position:"fixed", top:"16px", left:"16px", zIndex:200,
           background:"var(--card)", border:"1px solid var(--border)",
           borderRadius:"10px", padding:"8px 10px", cursor:"pointer",
           fontSize:"18px", color:"var(--text)", lineHeight:1
@@ -975,7 +975,7 @@ export default function App() {
         zIndex:160
       }}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"24px"}}>
-          <div className="logo" style={{margin:0}}>Edu<span>Flow</span></div>
+          <div className="logo" style={{margin:0,fontSize:"18px"}}>Edu<span>Flow</span></div>
           <button onClick={()=>setSidebarOpen(false)}
             style={{background:"none",border:"none",color:"var(--muted)",fontSize:"20px",cursor:"pointer"}}>✕</button>
         </div>
@@ -997,6 +997,16 @@ export default function App() {
           <button className="btn btn-ghost btn-sm" style={{width:"100%",marginTop:"8px"}} onClick={logout}>🚪 Logout</button>
         </div>
       </nav>
+
+      {/* TOP NAVBAR */}
+      <div style={{
+        position:"fixed", top:0, left:0, right:0, height:"56px",
+        background:"var(--card)", borderBottom:"1px solid var(--border)",
+        display:"flex", alignItems:"center", padding:"0 20px",
+        zIndex:140, gap:"16px"
+      }}>
+        <div className="logo" style={{fontSize:"20px"}}>Edu<span>Flow</span></div>
+      </div>
 
       {/* MAIN */}
       <main className="main">
