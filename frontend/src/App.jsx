@@ -948,20 +948,41 @@ export default function App() {
   return (
     <div className="app-shell">
 
-      {/* HAMBURGER BUTTON */}
-      <button
-        onClick={()=>setSidebarOpen(o=>!o)}
-        style={{
-          position:"fixed", top:"16px", left:"16px", zIndex:200,
-          background:"var(--card)", border:"1px solid var(--border)",
-          borderRadius:"10px", padding:"8px 10px", cursor:"pointer",
-          fontSize:"18px", color:"var(--text)", lineHeight:1
-        }}>☰</button>
+      {/* TOP NAVBAR */}
+      <div style={{
+        position:"fixed", top:0, left:0, right:0, height:"56px",
+        background:"var(--card)", borderBottom:"1px solid var(--border)",
+        display:"flex", alignItems:"center", justifyContent:"space-between",
+        padding:"0 20px", zIndex:140
+      }}>
+        {/* LEFT — Hamburger + Logo */}
+        <div style={{display:"flex",alignItems:"center",gap:"14px"}}>
+          <button onClick={()=>setSidebarOpen(o=>!o)}
+            style={{
+              background:"none", border:"1px solid var(--border)",
+              borderRadius:"8px", padding:"6px 10px", cursor:"pointer",
+              fontSize:"18px", color:"var(--text)", lineHeight:1
+            }}>☰</button>
+          <div className="logo" style={{fontSize:"20px",margin:0}}>Edu<span>Flow</span></div>
+        </div>
 
-      {/* OVERLAY — clicking outside closes sidebar */}
+        {/* RIGHT — User name + Logout */}
+        <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+            <div className="avatar" style={{width:"30px",height:"30px",fontSize:"12px"}}>
+              {(user?.name||"U")[0].toUpperCase()}
+            </div>
+            <span style={{fontSize:"13px",fontWeight:600,color:"var(--text)"}}>
+              {user?.name||"Student"}
+            </span>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={logout}>🚪 Logout</button>
+        </div>
+      </div>
+
+      {/* OVERLAY */}
       {sidebarOpen && (
-        <div
-          onClick={()=>setSidebarOpen(false)}
+        <div onClick={()=>setSidebarOpen(false)}
           style={{
             position:"fixed", inset:0, background:"rgba(0,0,0,.5)",
             zIndex:150, backdropFilter:"blur(2px)"
@@ -974,10 +995,10 @@ export default function App() {
         transition: "transform .3s ease",
         zIndex:160
       }}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"24px"}}>
-          <div className="logo" style={{margin:0,fontSize:"18px"}}>Edu<span>Flow</span></div>
+        {/* Sidebar header */}
+        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:"24px"}}>
           <button onClick={()=>setSidebarOpen(false)}
-            style={{background:"none",border:"none",color:"var(--muted)",fontSize:"20px",cursor:"pointer"}}>✕</button>
+            style={{background:"none",border:"none",color:"var(--muted)",fontSize:"22px",cursor:"pointer"}}>✕</button>
         </div>
         {navItems.map((n,i)=>
           n===null
@@ -994,7 +1015,6 @@ export default function App() {
               <div style={{fontSize:"11px",color:"var(--muted)"}}>Student</div>
             </div>
           </div>
-          <button className="btn btn-ghost btn-sm" style={{width:"100%",marginTop:"8px"}} onClick={logout}>🚪 Logout</button>
         </div>
       </nav>
 
