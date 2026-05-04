@@ -341,25 +341,3 @@ select option { background:var(--card2); }
   .sidebar-bottom .user-chip div:last-child { display:none; }
   .user-chip { padding:8px; justify-content:center; }
 }
-/* For the logo */
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 8px;
-}
-
-.logo-img {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-}
-
-.logo-text {
-  font-family: 'Syne', sans-serif;
-  font-size: 20px;
-  font-weight: 800;
-  background: linear-gradient(90deg, #6c63ff, #ff6584);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
