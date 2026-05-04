@@ -963,7 +963,10 @@ export default function App() {
               borderRadius:"8px", padding:"6px 10px", cursor:"pointer",
               fontSize:"18px", color:"var(--text)", lineHeight:1
             }}>☰</button>
-          <div className="logo" style={{fontSize:"20px",margin:0}}>Edu<span>Flow</span></div>
+          <div className="logo">
+            <img src="/src/assets/logo.png" alt="EduFlow Logo" className="logo-img" />
+            <span className="logo-text">EduFlow</span>
+          </div>
         </div>
 
         {/* RIGHT — User name + Logout */}
