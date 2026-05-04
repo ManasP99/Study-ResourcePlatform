@@ -889,6 +889,7 @@ export default function App() {
   const [resources, setResources] = useState([]);
   const [tasks,     setTasks]     = useState([]);
   const [toastMsg,  setToastMsg]  = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Wake up Render backend on app load
   useEffect(() => {
@@ -946,9 +947,38 @@ export default function App() {
 
   return (
     <div className="app-shell">
+
+      {/* HAMBURGER BUTTON */}
+      <button
+        onClick={()=>setSidebarOpen(o=>!o)}
+        style={{
+          position:"fixed", top:"16px", left:"16px", zIndex:200,
+          background:"var(--card)", border:"1px solid var(--border)",
+          borderRadius:"10px", padding:"8px 10px", cursor:"pointer",
+          fontSize:"18px", color:"var(--text)", lineHeight:1
+        }}>☰</button>
+
+      {/* OVERLAY — clicking outside closes sidebar */}
+      {sidebarOpen && (
+        <div
+          onClick={()=>setSidebarOpen(false)}
+          style={{
+            position:"fixed", inset:0, background:"rgba(0,0,0,.5)",
+            zIndex:150, backdropFilter:"blur(2px)"
+          }}/>
+      )}
+
       {/* SIDEBAR */}
-      <nav className="sidebar">
-        <div className="logo">Edu<span>Flow</span></div>
+      <nav className="sidebar" style={{
+        transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+        transition: "transform .3s ease",
+        zIndex:160
+      }}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"24px"}}>
+          <div className="logo" style={{margin:0}}>Edu<span>Flow</span></div>
+          <button onClick={()=>setSidebarOpen(false)}
+            style={{background:"none",border:"none",color:"var(--muted)",fontSize:"20px",cursor:"pointer"}}>✕</button>
+        </div>
         {navItems.map((n,i)=>
           n===null
             ? <hr key={i} className="nav-divider"/>
