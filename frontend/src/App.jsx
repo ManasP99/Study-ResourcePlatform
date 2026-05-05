@@ -455,7 +455,7 @@ function TasksPage({ tasks, onRefresh, toast }) {
     try {
       await fetch(`${API}/tasks`, {
         method:"POST",
-        headers:{"Content-Type":"application/json"},
+        headers:{"Content-Type":"application/json", ...authHeaders()},
         body: JSON.stringify({ text, subject, priority, dueDate: dueDate||null }),
       });
       setText(""); setSubject("General"); setPriority("medium"); setDueDate("");
