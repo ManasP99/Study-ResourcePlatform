@@ -914,7 +914,8 @@ export default function App() {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch(`${API}/tasks`);
+      const res = await fetch(`${API}/tasks`, { headers: authHeaders() });
+      if (res.status===401) { logout(); return; }
       const data = await res.json();
       setTasks(Array.isArray(data) ? data : []);
     } catch {}
