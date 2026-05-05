@@ -468,7 +468,7 @@ function TasksPage({ tasks, onRefresh, toast }) {
     try {
       await fetch(`${API}/tasks/${id}`, {
         method:"PUT",
-        headers:{"Content-Type":"application/json"},
+        headers:{"Content-Type":"application/json", ...authHeaders()},
         body: JSON.stringify({ completed: !completed }),
       });
       onRefresh();
@@ -477,7 +477,7 @@ function TasksPage({ tasks, onRefresh, toast }) {
 
   const del = async (id) => {
     try {
-      await fetch(`${API}/tasks/${id}`, { method:"DELETE" });
+      await fetch(`${API}/tasks/${id}`, { method:"DELETE", headers: authHeaders() });
       onRefresh(); toast("🗑 Task deleted");
     } catch { toast("❌ Delete failed"); }
   };
